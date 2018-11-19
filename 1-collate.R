@@ -9,7 +9,7 @@ years <- c('1996', '1998', '2001', '2004', '2007', '2010', '2013', '2016')
 read_aec <- function(year) {
   fn <- paste0(data_f, '/', year, pattern)
   df <- read_delim(fn, delim = '\t')
-  df$year <- year
+  df$Year <- year
   return(df)
 }
 
