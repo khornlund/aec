@@ -46,20 +46,37 @@ jiggle <- function(tpp_df, year, p_jiggle, mu_size, sd_size) {
   return(ALP_W_delta)
 }
 
+run_sim <- function(tpp_df, year, p_jiggle, mu_size, sd_size, N) {
+  results <- replicate(N, jiggle(tpp_df, year, p_jiggle, mu_size, sd_size))
+  df <- data_frame(
+    'year' = year, 
+    'p_jiggle' = p_jiggle,
+    'mu_jiggle' = mu_size,
+    'sd_jiggle' = sd_size,
+    'mean_delta' = mean(results, na.rm = TRUE)
+  )
+  return(df)
+}
+
 data_fn <- 'data/aec/aec-hor-tpp-results.rds'
 tpp_df <- readRDS(data_fn)
 
 set.seed(1)
 
-year     <- 2010 # year to simulate
-p_jiggle <- 0.70 # probability of a district having its pop shuffled
-#mu_size  <- 20000 # mean size of pop to shuffle
-sd_size  <- 5000 # sd of size to shuffle
+year     <- 2010                    # year to simulate
+p_jiggle <- 0.70                    # probability of a district having its pop shuffled
+mu_sizes <- seq(20000, 35000, 5000) # mean size of pop to shuffle
+sd_size  <- 5000                    # sd of size to shuffle
+N        <- 5000                    # replications
 
-for (mu_size in seq(20000, 35000, 5000)) {
-  results <- replicate(10000, jiggle(tpp_df, year, p_jiggle, mu_size, sd_size))
-  print(str_c('Mu=', mu_size, ' , mean seat change=', mean(results, na.rm = TRUE)))
-}
+results_df <- map_dfr(
+  .x = mu_sizes, 
+  .f = run_sim, 
+  tpp_df = tpp_df,
+  year = year,
+  p_jiggle = p_jiggle,
+  sd_size = sd_size,
+  N = N)
 
 
 
