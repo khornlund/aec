@@ -111,36 +111,6 @@ seats_by_state <- tpp_df %>%
   filter(Year == '2016')
 
 #------------------------------------------------------------------------------
-# scatter plot vote v div spread
-#------------------------------------------------------------------------------
-
-vote_div_df <- tpp_df %>%
-  mutate(LIB_W = LIB_P > 0.5) %>%
-  mutate(ALP_W = ALP_P > 0.5) %>%
-  group_by(Year) %>%
-  summarise(
-    LIB_V_N = sum(LIB_N),
-    ALP_V_N = sum(ALP_N),
-    LIB_S_N = sum(LIB_W),
-    ALP_S_N = sum(ALP_W)) %>%
-  mutate(Spread_V = (LIB_V_N - ALP_V_N)/(LIB_V_N + ALP_V_N)) %>%
-  mutate(Spread_S = (LIB_S_N - ALP_S_N)/(LIB_S_N + ALP_S_N))
-
-vote_div_df %>%
-  ggplot(aes(x = Spread_V, y = Spread_S, label = Year)) +
-  geom_abline(slope = 1, intercept = 0, linetype = 2) +
-  geom_point(size = 3) +
-  geom_label(hjust=-0.2, vjust=0.6) +
-  theme_calc() +
-  xlim(c(-0.1, 0.1)) +
-  ylim(c(-0.33, 0.33)) +
-  ylab('Division Spread (%)') +
-  xlab('Vote Spread (%)') +
-  labs(
-    title = 'TPP Vote v Division Spread',
-    subtitle = PLOT_SUBTITLE)
-
-#------------------------------------------------------------------------------
 # Compare to real seat data
 #------------------------------------------------------------------------------
 
@@ -155,9 +125,9 @@ real_vote_div_df <- wiki_df %>%
 real_vote_div_df$Winner = as.factor(map_chr(.x = real_vote_div_df$Spread_S, .f = favour_func))
 
 real_vote_div_df %>%
-  ggplot(aes(x = Spread_V, y = Spread_S, color = Winner)) +
-  geom_abline(slope = 1, intercept = 0, linetype = 2) +
-  geom_point(size=2) +
+  ggplot(aes(x = Spread_V, y = Spread_S)) +
+  geom_smooth(method='lm', color = 'grey') +
+  geom_point(aes(color = Winner), size=2) +
   scale_color_manual(values=c('red', 'blue')) +
   theme_calc() +
   ylab('Seat Spread (%)') +
@@ -182,7 +152,6 @@ get_year_grp <- function(year) {
 real_vote_div_df %>%
   mutate(YearSpan = map_chr(.x = Year, .f = get_year_grp)) %>%
   ggplot(aes(x = Spread_V, y = Spread_S, color = Winner)) +
-  geom_abline(slope = 1, intercept = 0, linetype = 2) +
   geom_point(size=2) +
   scale_color_manual(values=c('red', 'blue')) +
   theme_calc() +
