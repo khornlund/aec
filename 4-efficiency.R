@@ -46,52 +46,21 @@ aus_gap_df <- gap_df %>%
     `Efficiency Gap` = Abs_Waste_Gap / Total,
     State = 'AUS')
 
-melt_df <- bind_rows(gap_df, aus_gap_df) %>%
-  melt(
-    id.vars = c("Year", "State"), 
-    measure.vars = c("TPP Vote Spread", "Efficiency Gap"),
-    variable.name = "Measure",
-    value.name = "Value")
+gap_df <- bind_rows(gap_df, aus_gap_df) %>%
+  mutate(State = order_aus(State))
+gap_df$`TPP Favour` <- map_chr(.x = gap_df$`TPP Vote Spread`, .f = favour_func)
 
-melt_df$Favour <- map_chr(.x = melt_df$Value, .f = favour_func)
-melt_df$State  <- order_aus(melt_df$State)
-melt_df$Year   <- as.factor(melt_df$Year)
-
-melt_df %>%
-  ggplot(aes(x=Year, y=Value, color = Favour, shape = Measure)) +
-  geom_point(size = 3, alpha = 0.85) +
-  theme_calc() +
-  theme(axis.text.x = element_text(angle=45, hjust=1)) +
+gap_df %>%
+  filter(State %in% c('AUS', 'NSW', 'VIC', 'QLD', 'WA', 'SA')) %>%
+  ggplot(aes(x=`TPP Vote Spread`, y=`Efficiency Gap`, color = `TPP Favour`)) +
+  geom_point(size=2) +
   scale_color_manual(values=c('red', 'blue')) +
-  scale_shape_manual(values=c(0, 1)) +
-  labs(
-    title = 'Efficiency Gap and TPP Vote Spread',
-    subtitle = subtitle_years(1996, 2016),
-    x = 'Year',
-    y = 'Difference (%)') +
-  facet_wrap(State ~ .)
-
-
-# TAS 2013
-
-tas_2013_df <- tpp_df %>%
-  filter(Year == 2013) %>%
-  filter(State == 'TAS')
-
-print(tas_2013_df)
-
-# VIC 1996, 1998, 2007, 2016
-
-melt_df %>%
-  filter(State == 'VIC') %>%
-  ggplot(aes(x=Year, y=Value, color = Favour, shape = Measure)) +
-  geom_point(size = 3, alpha = 0.85) +
+  xlim(c(-0.25, +0.25)) +
+  ylim(c(-0.25, +0.25)) +
   theme_calc() +
-  theme(axis.text.x = element_text(angle=45, hjust=1)) +
-  scale_color_manual(values=c('red', 'blue')) +
-  scale_shape_manual(values=c(0, 1)) +
-  labs(
-    title = 'VIC Efficiency Gap and TPP Vote Spread',
-    subtitle = subtitle_years(1996, 2016),
-    x = 'Year',
-    y = 'Difference (%)')
+  facet_wrap(State ~ .) +
+  labs(title = 'TPP Vote Spread v Efficiency Gap',
+       subtitle = subtitle_years(1996, 2016),
+       x = 'TPP Vote Spread (%)',
+       y = 'Efficiency Gap (%)')
+
