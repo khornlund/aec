@@ -2,6 +2,7 @@ library(tidyverse)
 library(ggplot2)
 library(ggthemes)
 library(reshape2)
+source("2-eda.R")
 setwd("~/R/AEC")
 
 jiggle <- function(tpp_df, year, p_jiggle, mu_size, sd_size) {
@@ -62,11 +63,11 @@ run_sim <- function(year, tpp_df, p_jiggle, mu_size, sd_size, N) {
 data_fn <- 'data/aec/aec-hor-tpp-results.rds'
 tpp_df <- readRDS(data_fn)
 
-set.seed(3)
+set.seed(2)
 
 years    <- unique(tpp_df$Year)   # year to simulate
 p_jiggle <- 0.70   # probability of a district having its pop shuffled
-mu_size  <- 35000  # mean size of pop to shuffle
+mu_size  <- 30000  # mean size of pop to shuffle
 sd_size  <- 5000   # sd of size to shuffle
 N        <- 5000   # replications
 
@@ -79,6 +80,30 @@ df <- map_dfr(
   sd_size  = sd_size, 
   N        = N)
 
-write_csv(x = df, path = 'outputs/35000.csv')
+write_csv(x = df, path = 'outputs/30000.csv')
 
+a.df <- read_csv('outputs/25000.csv')
+b.df <- read_csv('outputs/30000.csv')
+c.df <- read_csv('outputs/35000.csv')
 
+d.df <- bind_rows(a.df, b.df, c.df)
+
+write_csv(x = d.df, path = 'data/montecarlo/map_randomisation.csv')
+
+sim.df <- read_csv('data/montecarlo/map_randomisation.csv')
+
+sim.df$Favour <- map_chr(.x = sim.df$mean_delta, .f = favour_func)
+
+sim.df %>%
+  filter(mu_jiggle == 30000) %>%
+  ggplot(aes(x=factor(year), y=mean_delta, fill=Favour)) +
+  geom_histogram(stat = 'identity', position = 'dodge') +
+  theme_calc() +
+  scale_color_manual(values=c('red', 'blue')) +
+  labs(title = 'Mean Vote Changes due to Map Randomisation',
+       subtitle = subtitle_years(1996, 2016),
+       x = 'Year',
+       y = 'Mean Change in Won Seats (+LIB / -ALP)')
+  
+  
+  
